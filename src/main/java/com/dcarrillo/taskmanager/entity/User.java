@@ -1,12 +1,16 @@
 package com.dcarrillo.taskmanager.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@Data
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -26,7 +30,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
 
     )
-    private Set<Role> role = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
 
     public User(String username, String email, String passwordHash) {
         this.username = username;
@@ -35,6 +39,6 @@ public class User {
     }
 
     public void addRole(Role role){
-        this.role.add(role);
+        this.roles.add(role);
     }
 }

@@ -1,11 +1,15 @@
 package com.dcarrillo.taskmanager.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
 @Table(name = "tasks")
+@Data
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,6 +19,7 @@ public class Task {
 
     private String description;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @ManyToOne
@@ -25,24 +30,9 @@ public class Task {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    private Date creationDate = new Date();
+    @CreationTimestamp
+    private LocalDateTime creationDate;
 
-    private Date expirationDate;
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
+    private LocalDateTime expirationDate;
 
 }

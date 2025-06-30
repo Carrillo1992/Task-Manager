@@ -6,15 +6,13 @@ import com.dcarrillo.taskmanager.dto.category.CreateCategoryDTO;
 import java.util.List;
 
 public interface CategoryService {
-    CategoryDTO createCategory(CreateCategoryDTO createCategoryDTO);
+    CategoryDTO createCategory(CreateCategoryDTO createCategoryDTO, Long userId);
 
-    List<CategoryDTO> findAll();
+    List<CategoryDTO> findAllByUserId(Long userId);
 
-    CategoryDTO findById(Long id);
+    CategoryDTO findByName(String categoryName, Long userId);
 
-    CategoryDTO updateCategory(Long id, CreateCategoryDTO createCategoryDTO);
-
-    void deleteCategory(Long id);
+    void deleteCategory(String categoryName ,  Long userId);
 
 
 

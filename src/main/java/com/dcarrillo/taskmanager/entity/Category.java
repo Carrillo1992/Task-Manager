@@ -1,9 +1,11 @@
 package com.dcarrillo.taskmanager.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "category")
+@Data
 public class Category {
 
     @Id
@@ -15,13 +17,4 @@ public class Category {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
 }

@@ -2,23 +2,77 @@ package com.dcarrillo.taskmanager.service;
 
 import com.dcarrillo.taskmanager.dto.user.RegisterUserDTO;
 import com.dcarrillo.taskmanager.dto.user.UserDTO;
+import com.dcarrillo.taskmanager.entity.Role;
 import com.dcarrillo.taskmanager.entity.User;
+import com.dcarrillo.taskmanager.repository.RoleRepository;
+import com.dcarrillo.taskmanager.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class UserServiceImpl implements UserService {
+
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(RoleRepository roleRepository,
+                           UserRepository userRepository,
+                           @Lazy PasswordEncoder passwordEncoder) {
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
     public UserDTO registerUser(RegisterUserDTO registerUserDto) {
-        return null;
+        if (userRepository.existsUserByEmail(registerUserDto.getEmail())){
+            throw new RuntimeException("Email ya registrado");
+        }
+        User user = new User();
+        user.setUsername(registerUserDto.getUsername());
+        user.setEmail(registerUserDto.getEmail());
+        Role userRole = roleRepository.findByName("ROLE_USER").orElseThrow(()->new RuntimeException("Rol no encontrado"));
+        user.setPasswordHash(passwordEncoder.encode(registerUserDto.getPassword()));
+        user.getRoles().add(userRole);
+        userRepository.save(user);
+        return getUserDTO(user);
     }
 
     @Override
     public UserDTO findByUsername(String username) {
-        return null;
+        return getUserDTO(userRepository.findByUsername(username).orElseThrow(()-> new RuntimeException("Usuario no encontrado")));
     }
 
     @Override
-    public List<User> findAll() {
-        return List.of();
+    public List<UserDTO> findAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::getUserDTO)
+                .toList();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (!userRepository.existsById(id)){
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        userRepository.deleteById(id);
+    }
+
+
+    private UserDTO getUserDTO(User user) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setEmail(user.getEmail());
+        userDTO.setId(user.getId());
+        userDTO.setUsername(user.getUsername());
+        userDTO.setRoles(user.getRoles()
+                .stream()
+                .map(Role::getName)
+                .toList());
+        return userDTO;
     }
 }
