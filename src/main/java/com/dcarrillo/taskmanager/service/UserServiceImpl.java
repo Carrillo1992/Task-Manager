@@ -9,6 +9,7 @@ import com.dcarrillo.taskmanager.repository.UserRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -42,11 +43,13 @@ public class UserServiceImpl implements UserService {
         return getUserDTO(user);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public UserDTO findByUsername(String username) {
         return getUserDTO(userRepository.findByUsername(username).orElseThrow(()-> new RuntimeException("Usuario no encontrado")));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<UserDTO> findAll() {
         return userRepository.findAll()

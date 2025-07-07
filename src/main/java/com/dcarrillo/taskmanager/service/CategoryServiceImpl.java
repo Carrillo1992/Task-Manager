@@ -6,6 +6,7 @@ import com.dcarrillo.taskmanager.entity.Category;
 import com.dcarrillo.taskmanager.repository.CategoryRepository;
 import com.dcarrillo.taskmanager.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
         return getCategoryDTO(userId, category);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<CategoryDTO> findAllByUserId(Long userId) {
         return categoryRepository.findAllByUser(userRepository.
@@ -43,6 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public CategoryDTO findByName(String categoryName, Long userId) {
         Category category = categoryRepository.findByNameAndUser_Id(categoryName, userId)
