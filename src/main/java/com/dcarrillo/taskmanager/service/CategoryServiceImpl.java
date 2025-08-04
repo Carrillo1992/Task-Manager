@@ -2,6 +2,7 @@ package com.dcarrillo.taskmanager.service;
 
 import com.dcarrillo.taskmanager.dto.category.CategoryDTO;
 import com.dcarrillo.taskmanager.dto.category.CreateCategoryDTO;
+import com.dcarrillo.taskmanager.dto.category.UpdateCategoryDTO;
 import com.dcarrillo.taskmanager.entity.Category;
 import com.dcarrillo.taskmanager.repository.CategoryRepository;
 import com.dcarrillo.taskmanager.repository.UserRepository;
@@ -20,6 +21,7 @@ public class CategoryServiceImpl implements CategoryService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     @Override
     public CategoryDTO createCategory(CreateCategoryDTO createCategoryDTO, Long userId) {
         if(categoryRepository.existsByNameAndUser_Id(createCategoryDTO.getName(), userId)){
@@ -47,16 +49,27 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Transactional(readOnly = true)
     @Override
-    public CategoryDTO findByName(String categoryName, Long userId) {
-        Category category = categoryRepository.findByNameAndUser_Id(categoryName, userId)
+    public CategoryDTO findById(Long id, Long userId) {
+        Category category = categoryRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(()-> new RuntimeException("Categoria no encontrada"));
         return getCategoryDTO(userId,category);
     }
 
+    @Transactional
     @Override
-    public void deleteCategory(String categoryName ,  Long userId) {
+    public CategoryDTO updateCategory(Long id, Long userId, UpdateCategoryDTO updateCategoryDTO) {
+        Category category = categoryRepository.findByIdAndUser_Id(id , userId)
+                .orElseThrow(()->new RuntimeException("Categoria no encontrada"));
+        category.setName(updateCategoryDTO.getName());
+        categoryRepository.save(category);
+        return getCategoryDTO(userId,category);
+    }
 
-        Category category = categoryRepository.findByNameAndUser_Id(categoryName, userId)
+    @Transactional
+    @Override
+    public void deleteCategory(Long id, Long userId) {
+
+        Category category = categoryRepository.findByIdAndUser_Id(id , userId)
                 .orElseThrow(()-> new RuntimeException("Categoria no encontrada"));
         categoryRepository.delete(category);
     }

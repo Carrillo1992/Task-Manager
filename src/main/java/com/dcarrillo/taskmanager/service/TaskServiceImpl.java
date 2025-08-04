@@ -2,6 +2,8 @@ package com.dcarrillo.taskmanager.service;
 
 import com.dcarrillo.taskmanager.dto.task.CreateTaskDTO;
 import com.dcarrillo.taskmanager.dto.task.TaskDTO;
+import com.dcarrillo.taskmanager.dto.task.UpdateTaskDTO;
+import com.dcarrillo.taskmanager.entity.Category;
 import com.dcarrillo.taskmanager.entity.Status;
 import com.dcarrillo.taskmanager.entity.Task;
 import com.dcarrillo.taskmanager.repository.CategoryRepository;
@@ -35,7 +37,18 @@ public class TaskServiceImpl implements TaskService {
         Task task = new Task();
 
         task.setUser(userRepository.findById(userId).orElseThrow());
-        task.setCategory(categoryRepository.findByNameAndUser_Id(createTaskDTO.getCategoryName(), userId).orElseThrow());
+
+        if (createTaskDTO.getCategoryName() != null && createTaskDTO.getCategoryName().isEmpty()){
+            task.setCategory(categoryRepository.findByNameAndUser_Id( createTaskDTO.getCategoryName(), userId)
+                    .orElseGet(()->{
+                        Category newCategory = new Category();
+                        newCategory.setName(createTaskDTO.getCategoryName());
+                        newCategory.setUser(userRepository.findById(userId).orElseThrow());
+                        return categoryRepository.save(newCategory);
+                    }));
+        }else {
+            task.setCategory(categoryRepository.findByNameAndUser_Id("Sin Categoria", userId).orElseThrow());
+        }
         task.setStatus(Status.PENDING);
         task.setTitle(createTaskDTO.getTitle());
         task.setDescription(createTaskDTO.getDescription());
@@ -48,43 +61,38 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional(readOnly = true)
     @Override
-    public TaskDTO findById(Long id) {
-        Task task = taskRepository.findById(id).orElseThrow(()-> new RuntimeException("Tarea no existente"));
+    public TaskDTO findById(Long id, Long userId) {
+        Task task = taskRepository.findByIdAndUser_Id(id, userId).orElseThrow(()-> new RuntimeException("Tarea no existente"));
 
         return getTaskDTO(task);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public List<TaskDTO> findAllByUsername(String username) {
-        return taskRepository.findAllByUser(userRepository.findByUsername(username)
+    public List<TaskDTO> findAllByUserId(Long userId) {
+        return taskRepository.findAllByUser(userRepository.findById(userId)
                         .orElseThrow(()-> new RuntimeException("Usuario no existe")))
                 .stream()
                 .map(TaskServiceImpl::getTaskDTO)
                 .toList();
     }
 
+    @Transactional
     @Override
-    public TaskDTO updateTask(Long id, Long userId,  CreateTaskDTO createTaskDTO) {
+    public TaskDTO updateTask(Long id, Long userId,  UpdateTaskDTO updateTaskDTO) {
         Task task = taskRepository.findByIdAndUser_Id(id, userId).orElseThrow(()-> new RuntimeException("Tarea no existe para el Usuario " + userId ));
 
-        task.setCategory(categoryRepository.findByName(createTaskDTO.getCategoryName()));
-        task.setTitle(createTaskDTO.getTitle());
-        task.setDescription(createTaskDTO.getDescription());
-        task.setExpirationDate(createTaskDTO.getExpirationDate());
+        task.setCategory(categoryRepository.findByNameAndUser_Id(updateTaskDTO.getCategory(), userId).orElseThrow(()->new RuntimeException("categoria no encontrada")));
+        task.setTitle(updateTaskDTO.getTitle());
+        task.setDescription(updateTaskDTO.getDescription());
+        task.setStatus(Status.valueOf(updateTaskDTO.getStatus()));
+        task.setExpirationDate(updateTaskDTO.getExpirationDate());
         taskRepository.save(task);
 
         return getTaskDTO(task);
     }
 
-    @Override
-    public TaskDTO updateStatus(Long id, Long userId, Status status) {
-        Task task = taskRepository.findByIdAndUser_Id(id, userId).orElseThrow(()-> new RuntimeException("Tarea no existe para el Usuario " + userId ));
-        task.setStatus(status);
-        taskRepository.save(task);
-        return getTaskDTO(task);
-    }
-
+    @Transactional
     @Override
     public void deleteTask(Long id, Long userId) {
         Task task = taskRepository.findByIdAndUser_Id(id, userId).orElseThrow(()-> new RuntimeException("Tarea no existe para el Usuario " + userId ));
@@ -96,11 +104,10 @@ public class TaskServiceImpl implements TaskService {
         TaskDTO taskDTO = new TaskDTO();
         taskDTO.setId(task.getId());
         taskDTO.setUsername(task.getUser().getUsername());
+        taskDTO.setTitle(task.getTitle());
         taskDTO.setStatus(String.valueOf(task.getStatus()));
         taskDTO.setDescription(task.getDescription());
-        if(task.getCategory() != null){
-            taskDTO.setCategoryName(task.getCategory().getName());
-        }
+        taskDTO.setCategoryName(task.getCategory().getName());
         taskDTO.setCreationDate(task.getCreationDate());
         taskDTO.setExpirationDate(task.getExpirationDate());
         return taskDTO;
